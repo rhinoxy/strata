@@ -22,7 +22,7 @@
     "content_preview": "マルチソケットワークステーションでのNUMA最適化の主なメリットは、CPUとメモ..."
   },
   {
-    "name": "3. フル最適化 (Optimized: spec 2, min-p 0.6, numactl, HSA_FORCE_FINE_GRAIN_PCIE=1)",
+    "name": "3. 投機・PCIe最適化 (--spec 2, min-p 0.6, numactl, HSA_FORCE_FINE_GRAIN_PCIE=1)",
     "wall_time_s": 20.61,
     "predicted_per_second": 9.2,
     "predicted_n": 120,
@@ -31,5 +31,16 @@
     "draft_n_accepted": 48,
     "acceptance_rate": 94.1,
     "content_preview": "マルチソケットワークステーションでのNUMA最適化の主なメリットは、CPUとメモ..."
+  },
+  {
+    "name": "4. 現在構成 (+ --ple-io ram, 256K Context, KV int8, on-demand)",
+    "wall_time_s": 3.27,
+    "predicted_per_second": 38.1,
+    "predicted_n": 120,
+    "predicted_ms": 3153.4,
+    "draft_n": 52,
+    "draft_n_accepted": 48,
+    "acceptance_rate": 92.3,
+    "content_preview": "マルチソケットワークステーションでのNUMA最適化の主なメリットは、CPUとメモリを..."
   }
 ]
