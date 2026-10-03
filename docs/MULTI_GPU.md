@@ -49,6 +49,8 @@ now on; the answer is kept.
 - Intel GPUs, and a mix of NVIDIA and AMD cards. (AMD cards share a model among themselves: `./setup.sh --backend
   hip --gpus 1,0`, see [AMD_HIP.md](AMD_HIP.md).)
 
+**Multi-Socket / NUMA systems (cross-QPI/UPI GPUs):** see [NUMA_QPI_TUNING.md](NUMA_QPI_TUNING.md) for memory interleaving (`--interleave=all`) and MTP tuning guidelines.
+
 Or edit an existing config (`strata-*.json`), then restart:
 
 ```json

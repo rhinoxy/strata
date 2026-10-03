@@ -2872,8 +2872,12 @@ def write_run_script(model, cfg_path, port):
         script.write_text("@echo off\r\ntitle Strata " + model + "\r\ncd /d \"" + str(ROOT) + "\"\r\n" +
                           " ".join(f'"{x}"' for x in serve) + "\r\nif errorlevel 1 pause\r\n", encoding="utf-8")
     else:
+        numa_prefix = ""
+        # Auto-detect multi-socket NUMA systems and apply memory interleaving
+        if Path("/sys/devices/system/node/node1").exists() and shutil.which("numactl"):
+            numa_prefix = "numactl --interleave=all "
         script = ROOT / f"run-{model.lower()}.sh"
-        script.write_text("#!/bin/sh\ncd \"" + str(ROOT) + "\"\nexec " + " ".join(f'"{x}"' for x in serve) + "\n",
+        script.write_text("#!/bin/sh\ncd \"" + str(ROOT) + "\"\nexec " + numa_prefix + " ".join(f'"{x}"' for x in serve) + "\n",
                           encoding="utf-8")
         script.chmod(0o755)
     return script
