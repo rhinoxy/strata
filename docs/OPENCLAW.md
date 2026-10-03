@@ -26,6 +26,7 @@
     "--expert-profile", "/home/your_name/Strata/data/expert-profile.bin",
     "--expert-cache", "auto",
     "--prefill", "2048",
+    "--ple-io", "ram",
     "--spec", "2",
     "--spec-min-p", "0.6",
     "--mtp", "/home/your_name/Strata-data/mtp/rt",
@@ -58,8 +59,9 @@
 ### 重要な最適化パラメータ
 1. `"lazy_load": true`: 起動時にモデルをロードせず、最初のリクエスト受信時にロード。
 2. `"idle_unload_s": 300`: アイドル5分で自動アンロード。
-3. `"--prefill", "2048"`: OpenClawの巨大なシステムプロンプト（2万トークン超）処理時のSSD/PLE読み込みレイテンシを平滑化。
-4. `"STRATA_WATCHDOG_S": "300"`: 大規模プロンプト処理時のウォッチドッグ誤検知（デフォルト60s）を回避。
+3. `"--prefill", "2048"`: OpenClawの巨大なシステムプロンプト（2万トークン超）処理時のチャンクサイズ。
+4. `"--ple-io", "ram"`: 27GBのPLEテーブルをMain RAMに常駐（mlock/キャッシュ）させ、SSD I/Oレイテンシをゼロ化して超長文Prefillを高速化。
+5. `"STRATA_WATCHDOG_S": "300"`: 大規模プロンプト処理時のウォッチドッグ誤検知（デフォルト60s）を回避。
 
 ---
 

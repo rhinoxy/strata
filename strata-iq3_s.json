@@ -13,6 +13,8 @@
   "auto",
   "--prefill",
   "2048",
+  "--ple-io",
+  "ram",
   "--spec",
   "2",
   "--spec-min-p",
