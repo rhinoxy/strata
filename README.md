@@ -133,6 +133,8 @@ Sizes, downloads and what fits where: [docs/MODELS.md](docs/MODELS.md). You can 
 - **From your phone or another PC:** `START-HERE.bat --setup --host 0.0.0.0 --api-key <secret>` - always with a key.
 - **Good to know:** it answers one request at a time. The first message of a chat is read in full (about 1 minute
   per 30,000 tokens); follow-ups start in seconds.
+- **On-Demand & Power Saving:** Run as a lightweight service, load only when needed and unload when idle: [OpenClaw & Power Saving Guide](docs/OPENCLAW.md).
+- **Multi-Socket NUMA Tuning:** Dual-socket CPU and cross-NUMA GPU tuning: [NUMA / QPI Tuning Guide](docs/NUMA_QPI_TUNING.md).
 
 More: [where your chats are stored](docs/INSTALL.md#where-things-are-stored), [the API](docs/DETAILS.md#using-it).
 

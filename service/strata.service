@@ -1,0 +1,13 @@
+[Unit]
+Description=Strata OpenAI-Compatible Inference Server (On-Demand / Lazy Load)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Strata
+ExecStart=%h/Strata/run-iq3_s.sh
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target
