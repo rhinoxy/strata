@@ -1,0 +1,35 @@
+[
+  {
+    "name": "1. 初期デフォルト (Default: spec 4, min-p 0.5, no NUMA, no HSA)",
+    "wall_time_s": 32.96,
+    "predicted_per_second": 6.4,
+    "predicted_n": 120,
+    "predicted_ms": 18655.2,
+    "draft_n": 82,
+    "draft_n_accepted": 65,
+    "acceptance_rate": 79.3,
+    "content_preview": "マルチソケットワークステーションでのNUMA最適化の主なメリットは、**CPUと..."
+  },
+  {
+    "name": "2. NUMAインターリーブのみ (NUMA only: spec 4, min-p 0.5, numactl, no HSA)",
+    "wall_time_s": 19.84,
+    "predicted_per_second": 10.1,
+    "predicted_n": 120,
+    "predicted_ms": 11897.9,
+    "draft_n": 79,
+    "draft_n_accepted": 66,
+    "acceptance_rate": 83.5,
+    "content_preview": "マルチソケットワークステーションでのNUMA最適化の主なメリットは、CPUとメモ..."
+  },
+  {
+    "name": "3. フル最適化 (Optimized: spec 2, min-p 0.6, numactl, HSA_FORCE_FINE_GRAIN_PCIE=1)",
+    "wall_time_s": 20.61,
+    "predicted_per_second": 9.2,
+    "predicted_n": 120,
+    "predicted_ms": 12984.2,
+    "draft_n": 51,
+    "draft_n_accepted": 48,
+    "acceptance_rate": 94.1,
+    "content_preview": "マルチソケットワークステーションでのNUMA最適化の主なメリットは、CPUとメモ..."
+  }
+]

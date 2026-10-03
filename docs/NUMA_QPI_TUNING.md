@@ -21,9 +21,15 @@ This distributes allocated pages round-robin across all available NUMA memory no
 
 ### Measured Impact (Dual Intel Xeon E5-2687W v4 + Dual AMD RX 9060 XT 16GB)
 - **Model**: Qwen3.8-Flash-Next `IQ3_S` (125B MoE)
-- **Topology**: GPU 1 on Socket 0 (NUMA Node 0), GPU 2 on Socket 1 (NUMA Node 1), QPI interconnect.
-- **Default allocation**: ~5.5 tokens/sec
-- **With `numactl --interleave=all`**: **~7.5 tokens/sec (+36% improvement)**
+- **Topology**: GPU 1 on Socket 0 (NUMA Node 0), GPU 2 on Socket 1 (NUMA Node 1), QPI interconnect (NUMA distance 21).
+
+| Configuration | Decode Speed | Wall Time (120 tok) | Draft Acceptance | Host RAM Load Bandwidth |
+|---|---|---|---|---|
+| **1. Default (no NUMA, spec 4, min-p 0.5)** | **6.4 tok/s** | 32.96 s | 79.3% (65/82) | 1.48 GiB/s (82 s) |
+| **2. NUMA Interleaving only (`--interleave=all`)** | **10.1 tok/s** | **19.84 s (-40%)** | 83.5% (66/79) | **9.94 GiB/s (6.7x)** |
+| **3. Full Optimization (NUMA + spec 2 + min-p 0.6 + HSA)** | **9.2–9.5 tok/s** | 20.61 s | **94.1% (48/51)** | **10.31 GiB/s** |
+
+*Note: While Case 2 achieves peak burst decode throughput on simple Japanese text, Case 3 significantly reduces speculative rollbacks and GPU verification chatter across QPI, yielding a 94.1% draft acceptance rate and predictable latency on complex reasoning workloads.*
 
 ---
 
