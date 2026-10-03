@@ -99,7 +99,7 @@ exec numactl --interleave=all /home/your_name/Strata/.venv/bin/python /home/your
 "strata": {
   "baseUrl": "http://127.0.0.1:8081/v1",
   "api": "openai-completions",
-  "apiKey": "strata-local",
+  "apiKey": "REMOVED-BY-FILTER-REPO",
   "models": [
     {
       "id": "qwen3.8-flash-next-iq3_s",

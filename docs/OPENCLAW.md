@@ -41,7 +41,10 @@
   "lib_dirs": [
     "/opt/rocm/lib"
   ],
+  "host": "0.0.0.0",
   "port": 8081,
+  "api_key": "REMOVED-BY-FILTER-REPO",
+  "allowed_hosts": ["*"],
   "backend": "hip",
   "env": {
     "STRATA_HIPBLASLT_TUNING": "/home/your_name/Strata/tools/hip/gfx1200-hipblaslt-100202.txt",
@@ -73,7 +76,7 @@
 "strata": {
   "baseUrl": "http://127.0.0.1:8081/v1",
   "api": "openai-completions",
-  "apiKey": "strata-local",
+  "apiKey": "REMOVED-BY-FILTER-REPO",
   "models": [
     {
       "id": "qwen3.8-flash-next-iq3_s",
