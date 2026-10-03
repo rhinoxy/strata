@@ -29,7 +29,7 @@
     "--spec", "2",
     "--spec-min-p", "0.6",
     "--mtp", "/home/your_name/Strata-data/mtp/rt",
-    "--max-context", "65536",
+    "--max-context", "262144",
     "--kv", "int8",
     "--kv-resident", "32768"
   ],
@@ -86,8 +86,8 @@
         "cacheRead": 0,
         "cacheWrite": 0
       },
-      "contextWindow": 65536,
-      "contextTokens": 65536,
+      "contextWindow": 262144,
+      "contextTokens": 262144,
       "maxTokens": 8192,
       "compat": {
         "supportsUsageInStreaming": true,

@@ -20,7 +20,7 @@
   "--mtp",
   "/home/your_name/Strata-data/mtp/rt",
   "--max-context",
-  "65536",
+  "262144",
   "--kv",
   "int8",
   "--kv-resident",
