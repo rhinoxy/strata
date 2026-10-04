@@ -1,0 +1,47 @@
+# collected 2026-10-05
+Linux your_name-Precision-Tower-7910 7.0.0-30-generic #30~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Aug  7 13:27:52 UTC 2 x86_64 x86_64 x86_64 GNU/Linux
+
+## CPU
+Model name:                              Intel(R) Xeon(R) CPU E5-2687W v4 @ 3.00GHz
+Thread(s) per core:                      2
+Socket(s):                               2
+CPU(s) scaling MHz:                      63%
+CPU max MHz:                             3500.0000
+CPU min MHz:                             1200.0000
+NUMA node(s):                            2
+NUMA node0 CPU(s):                       0-11,24-35
+NUMA node1 CPU(s):                       12-23,36-47
+
+## Memory
+               total        used        free      shared  buff/cache   available
+Mem:             188          93          31           0          91          95
+Swap:              7           0           7
+HugePages_Total:   24000
+Hugepagesize:       2048 kB
+
+## Storage
+NAME MODEL              ROTA  SIZE
+sda  ST2000DM001-1ER164    1  1.8T
+/dev/sda2       1.8T  1.6T  121G  94% /
+
+## Swap
+/swap.img                               file		8388604		0		-1
+
+## GPU
+GPU[0]		: Card Series: 		AMD Radeon RX 6400
+GPU[0]		: GFX Version: 		gfx1034
+GPU[1]		: Card Series: 		AMD Radeon Graphics
+GPU[1]		: GFX Version: 		gfx1200
+GPU[2]		: Card Series: 		AMD Radeon Graphics
+GPU[2]		: GFX Version: 		gfx1200
+
+## ROCm
+7.2.4
+
+## memlock limit (service)
+LimitMEMLOCK=infinity
+your_name soft memlock unlimited
+your_name hard memlock unlimited
+
+## hugepages sysctl
+vm.nr_hugepages=24000

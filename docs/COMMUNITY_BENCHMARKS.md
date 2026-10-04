@@ -15,6 +15,10 @@ and their limits. Report what you actually measured and label estimates separate
 - [2026-09-30: RTX 5090, Core Ultra 9 285K, 64 GB RAM](../bench/results/2026-09-30-community-rtx-5090/README.md):
   Strata 0.1.29, original Flash-Next IQ2_XS, 131,072-token context; three runs
   each at 4,096, 32,768, and 128,000 prompt tokens, plus six recall checks.
+- [2026-10-04: 2x RX 9060 XT, dual Xeon E5-2687W v4, 188 GB RAM, HDD](../bench/results/2026-10-04-amd-dual-9060xt-tuning/README.md):
+  Strata 0.1.38 (HIP), original Flash-Next GSQ-RCO IQ3_S, 262,144-token context;
+  three runs each at 4,096, 32,768, and 128,000 prompt tokens plus six recall
+  checks, before/after `--prefill auto`, and the memlock/hugepages OS fixes.
 
 ## What to record
 

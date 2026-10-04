@@ -1,0 +1,70 @@
+{
+  "service": "strata",
+  "model": "qwen3.8-flash-next-iq3_s",
+  "loaded": true,
+  "auto_load": true,
+  "structured_output": {
+    "formats": [
+      "json_object",
+      "json_schema"
+    ],
+    "method": "prompt_and_validate",
+    "constrained_decoding": false,
+    "stream_buffered": true
+  },
+  "engine": "0.1.38",
+  "started": 1791123542,
+  "uptime_s": 779,
+  "cache_max_tokens": 262144,
+  "context": {
+    "native": 262144,
+    "max_positions": 262144
+  },
+  "concurrency": {
+    "serving": 1,
+    "requested": 1
+  },
+  "dialects": [
+    "/v1/chat/completions",
+    "/v1/messages"
+  ],
+  "vision": {
+    "enabled": false,
+    "available": false,
+    "error": null
+  },
+  "activity": {
+    "requests": 14,
+    "in_flight": 0,
+    "last_request_at": 1791124321
+  },
+  "last_timings": {
+    "cache_n": 66694,
+    "prompt_n": 10430,
+    "prompt_ms": 20067.4,
+    "prompt_per_token_ms": 1.924,
+    "prompt_per_second": 519.7,
+    "predicted_n": 319,
+    "predicted_ms": 7648.9,
+    "predicted_per_token_ms": 23.978,
+    "predicted_per_second": 41.7,
+    "draft_n": 238,
+    "draft_n_accepted": 207,
+    "at": 1791124321
+  },
+  "machine": {
+    "at": 1791124322,
+    "gpu": {
+      "name": "AMD Radeon + AMD Radeon",
+      "used_mib": 32184.0,
+      "total_mib": 32608.0,
+      "util_pct": 30.5,
+      "temp_c": 55.0,
+      "power_w": 87.0
+    },
+    "ram": {
+      "used_gib": 92.4,
+      "total_gib": 188.8
+    }
+  }
+}

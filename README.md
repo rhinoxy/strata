@@ -85,7 +85,7 @@ exec numactl --interleave=all /home/your_name/Strata/.venv/bin/python /home/your
 - **背景**: モデルファイルはHDD（`/dev/sda2`, ST2000DM001）上に配置されています。Strataのデフォルト（`--ple-io direct`）はディスクから都度ダイレクトI/OでPLEテーブル（27GB）を読み込むため、HDDの物理的な磁気ヘッドのシーク待ち（10〜15ms/回、約75〜100 IOPS）が大量に発生。数万トークンの超長文プロンプト処理時にHDDシーク待ちで15分以上CPU/GPUが完全待機（アイドル）してしまう深刻なボトルネックが発生していました。
 - **対策**:
   - `--ple-io ram`: 27GBのPLEテーブルをMain RAMに常駐（起動時にシーケンシャル読込してmlock/全ページタッチ）させ、HDDの物理ランダムアクセスを完全排除（メモリアクセス直参照化）。搭載192GB RAMの潤沢なメモリ帯域をフル活用。
-  - `--prefill 2048`: チャンクサイズを8192から2048に最適化し、プロンプト処理を平滑化。
+  - `--prefill auto`: チャンクサイズをエンジンがVRAM状況から自動選択（この構成では8192を選択）。2048固定比で32Kプロンプト約+68%、128Kで約+79%（[ベンチマーク](bench/results/2026-10-04-amd-dual-9060xt-tuning/README.md)）。
   - `"STRATA_WATCHDOG_S": "300"`: ウォッチドッグ判定時間を300秒に延長し、大規模プロンプトの安定処理を実現。
 
 ### 5. コンテキスト長の 256K (262,144 tokens) 拡張 & KV Streaming
@@ -99,7 +99,7 @@ exec numactl --interleave=all /home/your_name/Strata/.venv/bin/python /home/your
 "strata": {
   "baseUrl": "http://127.0.0.1:8081/v1",
   "api": "openai-completions",
-  "apiKey": "REMOVED-BY-FILTER-REPO",
+  "apiKey": "<your-api-key>",
   "models": [
     {
       "id": "qwen3.8-flash-next-iq3_s",

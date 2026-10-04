@@ -25,7 +25,7 @@
     "--ple-gguf", "/home/your_name/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf",
     "--expert-profile", "/home/your_name/Strata/data/expert-profile.bin",
     "--expert-cache", "auto",
-    "--prefill", "2048",
+    "--prefill", "auto",
     "--ple-io", "ram",
     "--spec", "2",
     "--spec-min-p", "0.6",
@@ -43,7 +43,7 @@
   ],
   "host": "0.0.0.0",
   "port": 8081,
-  "api_key": "REMOVED-BY-FILTER-REPO",
+  "api_key": "<your-api-key>",
   "allowed_hosts": ["*"],
   "backend": "hip",
   "env": {
@@ -62,7 +62,7 @@
 ### 重要な最適化パラメータ
 1. `"lazy_load": true`: 起動時にモデルをロードせず、最初のリクエスト受信時にロード。
 2. `"idle_unload_s": 300`: アイドル5分で自動アンロード。
-3. `"--prefill", "2048"`: OpenClawの巨大なシステムプロンプト（2万トークン超）処理時のチャンクサイズ。
+3. `"--prefill", "auto"`: OpenClawの巨大なシステムプロンプト（2万トークン超）処理時、チャンクをエンジンがVRAM状況から自動選択（この構成では8192）。2048固定より約1.7倍高速（`bench/results/2026-10-04-amd-dual-9060xt-tuning/` 参照）。
 4. `"--ple-io", "ram"`: 27GBのPLEテーブルをMain RAMに常駐（mlock/キャッシュ）させ、HDD物理シーク待ちレイテンシをゼロ化して超長文Prefillを高速化。
 5. `"STRATA_WATCHDOG_S": "300"`: 大規模プロンプト処理時のウォッチドッグ誤検知（デフォルト60s）を回避。
 
@@ -76,7 +76,7 @@
 "strata": {
   "baseUrl": "http://127.0.0.1:8081/v1",
   "api": "openai-completions",
-  "apiKey": "REMOVED-BY-FILTER-REPO",
+  "apiKey": "<your-api-key>",
   "models": [
     {
       "id": "qwen3.8-flash-next-iq3_s",

@@ -1,0 +1,2 @@
+-rw-rw-r-- 1 your_name your_name 54817524224 10月  3 11:52 /home/your_name/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf
+-rw-rw-r-- 1 your_name your_name 28800138432 10月  3 11:59 /home/your_name/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf
