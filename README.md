@@ -180,7 +180,7 @@ PLEテーブルをHDDから直接読むデフォルト（`--ple-io direct`）と
 [ベンチマークレポート](bench/results/2026-10-04-amd-dual-9060xt-tuning/README.md)（コミュニティ形式、before/after各9ラン + リコール検査）。
 
 ### 8. PLEテーブルのmlock失敗解消 (`LimitMEMLOCK` + `limits.d`)
-- **背景**: PLEテーブルは約28.8 GiB（320,001,536行 × 90 B）だが、セッションのmemlock上限は約23.6 GiBで `PLE table table mlock failed` が発生し、メモリ圧迫時にテーブルがスワップアウトしてデコードが 4.3 tok/s まで崩落した。
+- **背景**: PLEテーブルは約28.8 GiB（320,001,536行 × 90 B）だが、セッションのmemlock上限は約23.6 GiBで `PLE table mlock failed` が発生し、メモリ圧迫時にテーブルがスワップアウトしてデコードが 4.3 tok/s まで崩落した。
 - **対策**（ユーザーレベルのsystemdはセッションのハード上限までしか上げられないため、`limits.d` が本体）:
 ```bash
 # /etc/security/limits.d/99-strata-memlock.conf
