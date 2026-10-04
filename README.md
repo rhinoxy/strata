@@ -171,3 +171,49 @@ PLEテーブルをHDDから直接読むデフォルト（`--ple-io direct`）と
 - **動作フロー**:
   - OpenClawからのリクエスト受信 ➔ C++エンジン自動起動＆27GB PLEテーブルRAMロード (約60秒) ➔ 68Kトークン即座にプレフィル (32秒) ➔ 高速生成 (35〜37 tok/s) ➔ 応答完了後5分で自動アンロード (VRAM 0%、GPU電力 9W/10W)。
 
+
+---
+
+## 🆕 2026-10-04 更新: OSレベル修正3件と `--prefill auto`
+
+上記の構成に、OSレベルの修正3件を追加した。詳細・全データは
+[ベンチマークレポート](bench/results/2026-10-04-amd-dual-9060xt-tuning/README.md)（コミュニティ形式、before/after各9ラン + リコール検査）。
+
+### 8. PLEテーブルのmlock失敗解消 (`LimitMEMLOCK` + `limits.d`)
+- **背景**: PLEテーブルは約28.8 GiB（320,001,536行 × 90 B）だが、セッションのmemlock上限は約23.6 GiBで `PLE table table mlock failed` が発生し、メモリ圧迫時にテーブルがスワップアウトしてデコードが 4.3 tok/s まで崩落した。
+- **対策**（ユーザーレベルのsystemdはセッションのハード上限までしか上げられないため、`limits.d` が本体）:
+```bash
+# /etc/security/limits.d/99-strata-memlock.conf
+your_name soft memlock unlimited
+your_name hard memlock unlimited
+
+# ~/.config/systemd/user/strata.service の [Service] に
+LimitMEMLOCK=infinity
+```
+- **結果**: エンジンログが `PLE table locked in RAM` に変化。退避によるストールが解消。
+
+### 9. 2 MiB Hugepages（エキスパートアリーナ）
+- **背景**: エキスパートアリーナは 23,983 × 2 MiB（約47 GiB）の巨大ページを要求するが、`vm.nr_hugepages=0` で4 KBページにフォールバックしていた。
+- **注意**: 稼働中の `sysctl -w` ではメモリ断片化で 5,786 / 24,000 ページしか確保できず（エンジンは全数確保でないとhugepagesを使わない）、**ブート時確保が必須**:
+```bash
+# /etc/sysctl.d/99-strata-hugepages.conf
+vm.nr_hugepages=24000
+```
+- **結果**: 再起動後 `hugetlb 2 MB pages` を確認。`HugePages_Free: 17`（23,983ページをエンジンが確保）。
+
+### 10. `--prefill 2048` ➔ `--prefill auto`（チャンク8192自動選択）
+- エンジンがVRAM状況から最大のチャンクを自動選択（この構成では8192、expert cacheから4.69 GiB/GPU借用）。
+- 実測（同一スクリプト・毎回新規プロンプト、中央値）:
+
+| プロンプト長 | `--prefill 2048` | `--prefill auto` (8192) | 向上 |
+| :--- | :---: | :---: | :---: |
+| 4,096 トークン | 529 tok/s | **609 tok/s** | +15% |
+| 32,768 トークン | 633 tok/s | **1,065 tok/s** | **+68%** |
+| 128,000 トークン | 657 tok/s | **1,174 tok/s** | **+79%** |
+
+- デコード速度は変化なし（36〜40 tok/s、設計通り）。ニードルリコール検査は 32K/128K × 深さ10/50/90% で **6/6 正解**。
+- 起動時のPLEテーブルロードは 45〜592 秒 ➔ **0.7 秒**（RAM常駐+hugepages、ウォーム時）。
+
+### 補足（現状構成の是正）
+- 現在の稼働構成は `--spec 4 --spec-min-p 0.5`（上記「2. 投機的サンプリング」時点の `--spec 2 / 0.6` から戻した。ドラフト採択率 72〜84% で問題なし）。
+- 実測ハード仕様: CPUは **Xeon E5-2687W v4 ×2（24コア/48スレッド）**、RAM **188 GiB**、カーネル **7.0.0-30-generic**（冒頭の環境表は旧計測値）。
