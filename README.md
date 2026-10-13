@@ -1,214 +1,221 @@
-<h1 align="center">Strata</h1>
+# Strata (ROCm / デュアル AMD GPU 最適化ビルド)
 
-**English** · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Português](README.pt-BR.md)
+本リポジトリは、デュアルソケット CPU（QPI/NUMA跨ぎ）およびデュアル AMD Radeon RX 9060 XT（ROCm 7.2.4）環境において、**Qwen3.8-Flash-Next** を最高効率・省電力で動作させるためのインストール手順、チューニングカスタマイズ、および実測ベンチマーク結果をまとめたものです。
 
-<p align="center"><b>Run a 125-billion-parameter AI model on your own gaming PC</b><br>
-NVIDIA or AMD graphics card (12 GB or more) · Windows or Linux · free and open source</p>
+**同じ環境ならそのまま再現できる完全セットアップガイド**: [docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md)（実稼働中の `strata-iq3_s.json` / `run-iq3_s.sh` / systemdユニット / OS設定3件の全文と検証チェックリスト付き）
 
-<p align="center"><a href="https://github.com/Niko1221/Strata/releases/download/v0.1.10/Pagoda.mp4"><img src="docs/media/pagoda-preview.webp" width="720" alt="A voxel pagoda garden that Strata's model wrote, running in the browser"></a><br>
-<sub>A voxel pagoda garden, 1 shot prompt running on an RTX 5070 with Strata (IQ3_S, 128K context) ·
-<a href="https://github.com/Niko1221/Strata/releases/download/v0.1.10/Pagoda.mp4">full video (49 s)</a></sub></p>
+---
 
-Strata runs **[Qwen3.8-Flash-Next](https://huggingface.co/Qwen/Qwen3.8-Flash-Next)** on a normal PC. This is a
-large, smart AI model that usually needs a server. It chats, writes code, reads pictures and works with your apps
-and coding agents. Nothing leaves your PC.
+## 🖥️ 動作検証ハードウェア環境
 
-## How fast is it?
+- **CPU**: Dual Intel Xeon E5-2690 v4 (合計 28コア / 56スレッド、2ソケット NUMA)
+- **RAM**: 192 GB DDR4 ECC Reg (96 GB / ソケット)
+- **GPU**: Dual AMD Radeon RX 9060 XT 16 GB (`gfx1200`, 各CPUソケット直下のPCIeスロットに配置)
+- **OS**: Linux (Ubuntu 24.04 LTS, カーネル 6.8)
+- **ROCm**: ROCm 7.2.4 (`hipblaslt`, `hipruntime`)
+- **対象モデル**: Qwen3.8-Flash-Next (IQ3_S 量子化、約 84 GB) + MTP ドラフトレイヤー
 
-We measured it on two ordinary gaming PCs. A token is about ¾ of a word.
+---
 
-- **Writes answers:** how fast the reply appears in a short chat. 60 tokens per second is faster than you can read.
-- **Reads your prompt:** how fast it takes in what you send (here a 32K-token document, code or chat history).
+## 📦 インストール手順
 
-<table>
-<tr><th>NVIDIA: RTX 5070 (12 GB), Ryzen 5 7600, 64 GB RAM</th><th>AMD: RX 9070 XT (16 GB), Ryzen 9 3900X, 47 GB RAM</th></tr>
-<tr><td>
-
-| Size | Writes answers | Reads your prompt |
-| --- | ---: | ---: |
-| **Q2_0** | 94 tokens/s | 2,650 tokens/s |
-| **IQ2_XS** | 79 tokens/s | 2,090 tokens/s |
-| **IQ3_XXS** | 62 tokens/s | 1,750 tokens/s |
-| **IQ3_S** | 53 tokens/s | 1,620 tokens/s |
-| **Coder** | 55 tokens/s | 2,180 tokens/s |
-
-</td><td>
-
-| Size | Writes answers | Reads your prompt |
-| --- | ---: | ---: |
-| **Q2_0** | 60 tokens/s | 1,160 tokens/s |
-| **IQ2_XS** | 52 tokens/s | 1,110 tokens/s |
-| **Coder** | 44 tokens/s | 1,420 tokens/s |
-
-</td></tr>
-</table>
-
-NVIDIA: Q2_0 with engine 0.1.36, the other rows with 0.1.26 (4K answers, 32K prompts). The full tables are in
-[DETAILS.md](docs/DETAILS.md#speed-measured). A card with more VRAM is faster: an RTX 3090 (24 GB) should write
-about 100-140 tokens per second. Long chats and other cards: [speed of each model](docs/MODELS.md#how-fast-is-each-size),
-[community results](docs/COMMUNITY_BENCHMARKS.md).
-
-<p align="center"><a href="https://buymeacoffee.com/strataengine"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50"></a><br>
-<sub>Strata is free. If it runs well on your PC, a coffee keeps the work on it going.</sub></p>
-
-## What you need
-
-| | |
-| --- | --- |
-| **Graphics card** | **NVIDIA** GeForce RTX 20, 30, 40 or 50 series, or **AMD** Radeon RX 7900 XT / XTX, RX 7800 XT / 7700 XT, RX 9060 XT, RX 9070 / 9070 XT, Radeon AI PRO R9700 or RX 6800 / 6900 series. It needs **12 GB of VRAM or more**. |
-| **RAM** | 32 GB or more. Your RAM decides [which model](#which-model-should-i-pick) fits. 64 GB runs every size. |
-| **Disk** | About 80 GB free. Use an SSD if you can: the first start is much faster. |
-| **System** | Windows 10 / 11 or Linux, and a current graphics driver from NVIDIA or AMD. |
-
-The installer sets up everything else. Two or three cards can share the model ([multi-GPU](docs/MULTI_GPU.md)).
-
-Experimental, written and tested by community members on their own machines:
-
-- **Older graphics cards** (Tesla P40 / V100, GTX 10, Radeon VII / MI50, RX 6700 XT, RX 5500 XT): [Older GPUs](docs/OLDER_GPUS.md).
-- **Intel Arc**, built from source on Linux: [Intel Arc](docs/INTEL_ARC.md).
-- **AMD Ryzen AI Max (Strix Halo)**, built from source on Linux: [Strix Halo](docs/STRIX_HALO.md).
-- **Older processors without AVX2**: they work, but slowly. [Older CPUs](docs/INSTALL.md#older-cpus-experimental).
-
-The full list: [docs/INSTALL.md](docs/INSTALL.md#what-you-need).
-
-## Install
-
-### Let your AI set it up
-
-Do you use an AI coding assistant (Claude Code, Cursor, Codex, GitHub Copilot, ...)? Paste this into it:
-
-```text
-Set up Strata on this PC for me: https://github.com/Niko1221/Strata - follow docs/AI_SETUP.md in that repository.
+### 1. 依存パッケージと ROCm 環境の準備
+```bash
+sudo apt update
+sudo apt install -y build-essential cmake git numactl rocm-dev hipblaslt-dev
 ```
 
-It checks your graphics card, RAM and disk and picks the model that fits. Then it installs and starts it and tells
-you how to connect your apps. AI tools can also install, start and stop Strata through its
-[MCP server](docs/MCP_SERVER.md).
+### 2. リポジトリのビルド (HIP / gfx1200)
+```bash
+git clone git@github.com:rhinoxy/strata.git
+cd strata
 
-### Or do it yourself
+# HIP バックエンドビルド
+cmake -B build-hip -S . \
+  -DSTRATA_BACKEND=hip \
+  -DCMAKE_HIP_ARCHITECTURES=gfx1200 \
+  -DCMAKE_BUILD_TYPE=Release
+cmake --build build-hip -j$(nproc)
 
-[Download Strata](https://github.com/Niko1221/Strata/archive/refs/heads/main.zip) and unzip it (or `git clone` it).
-**Windows:** double-click **`START-HERE.bat`**. **Linux:** run **`./setup.sh`** in the Strata folder.
+# エンジンバイナリの配置
+mkdir -p engine
+cp build-hip/strata engine/strata
+```
 
-The steps are the same for NVIDIA and AMD. The installer finds your card and sets up the right engine for it. It
-asks you a few questions:
+### 3. Python 仮想環境のセットアップ
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-- which model and which size,
-- how much context (how much text the model keeps in mind),
-- whether it should read pictures.
+### 4. モデル・データファイルの配置
+以下の配置構成です（実データはHDD `/dev/sda2` 上に配置）：
+- モデル本体 (GGUF): `~/Strata-data/models/IQ3_S/`
+- パック (エキスパート & トークナイザ): `~/Strata-data/packs/iq3_s/`
+- MTP ドラフトレイヤー: `~/Strata-data/mtp/rt/`
+- エキスパートプロファイル: `data/expert-profile.bin`
 
-Press Enter each time for the recommended answer. Then it downloads the model (about 70 GB) and starts it. If the
-download stops, run it again: it continues where it left off. Your browser opens the Strata app at
-`http://127.0.0.1:8080`.
+---
 
-> **While the model starts, your PC can be slow or stop responding for 1-3 minutes** (longest the first time).
-> Strata loads 35-55 GB into your RAM and locks part of it for the graphics card. This is normal. Wait, and don't
-> close the window. The window shows what Strata is doing.
+## ⚡ 施したカスタマイズ
 
-**Next time**, run `START-HERE.bat` (or `./setup.sh`) again. It starts right away and downloads nothing twice. Close
-its window to stop the model. `UPDATE.bat` (`./update.sh`) updates Strata without starting it. Updating, Docker,
-several cards, where the files go and every option: [docs/INSTALL.md](docs/INSTALL.md).
+### 1. デュアルソケット NUMA インターリーブ (`numactl --interleave=all`)
+- **背景**: GPUが別々のCPUソケットに挿入されているため、単一NUMAノードにメモリが偏ると、他方のGPUアクセスがQPIバス（約30GB/s・高レイテンシ）経由となりボトルネックが発生。
+- **対策**: 起動時に全NUMAノードへメモリを均等配置する `--interleave=all` を適用。
+```bash
+# run-iq3_s.sh
+exec numactl --interleave=all /home/your_name/Strata/.venv/bin/python /home/your_name/Strata/serve/server.py ...
+```
 
-**Is it fast on your PC?** Run `BENCH.bat` (`./bench.sh`): about 5-10 minutes, it measures chat, 4K/16K prompts and an agent-style session with your own settings and writes a report to share ([how](docs/COMMUNITY_BENCHMARKS.md#run-the-benchmark)).
+### 2. 投機的サンプリング (MTP) の同期レイテンシ最適化 (PR #508)
+- **背景**: 投機ステップ数 (`--spec`) が大きすぎると、QPI跨ぎのGPU間検証通信ラウンドトリップが増加し速度低下を招く。
+- **対策**:
+  - `--spec`: `"4"` ➔ `"2"` に削減（QPI跨ぎの投機検証往復を抑制）
+  - `--spec-min-p`: `"0.5"` ➔ `"0.6"` に引き上げ（採択率の低いトークンの無駄な検証通信をカット）
+  - 環境変数 `"HSA_FORCE_FINE_GRAIN_PCIE": "1"` を追加（非P2P/NUMA環境でのROCm PCIe同期の安定化）
 
-## Which model should I pick?
+### 3. オンデマンド起動 & アイドル時自動VRAM解放（省電力化）
+- **背景**: 125B規模のモデルをVRAMに常時保持すると、待機時でもGPU電力が常時消費される。
+- **対策**:
+  - `"lazy_load": true`: 起動時はHTTPリスナー（メモリ約数十MB）のみ立ち上がり、VRAM使用率は **0%**、GPU待機電力は最小の各 **9W〜10W** に抑制。
+  - `"idle_unload_s": 300`: APIリクエスト完了後、5分間アクセスが途絶えると自動でC++エンジンを終了し、VRAMを完全解放。
+  - クライアント（OpenClaw等）からリクエストを受信すると、自動的にC++エンジンが起動してモデルをロード（約60秒）。
+  - `POST /unload` エンドポイントにより即時VRAM解放も可能。
 
-The installer recommends one for your RAM. The same model comes in several sizes, compressed more or less. Smaller
-sizes are faster. Larger sizes are a bit smarter.
+### 4. PLE Main RAM常駐化 & HDDランダムシークボトルネックの完全排除
+- **背景**: モデルファイルはHDD（`/dev/sda2`, ST2000DM001）上に配置されています。Strataのデフォルト（`--ple-io direct`）はディスクから都度ダイレクトI/OでPLEテーブル（27GB）を読み込むため、HDDの物理的な磁気ヘッドのシーク待ち（10〜15ms/回、約75〜100 IOPS）が大量に発生。数万トークンの超長文プロンプト処理時にHDDシーク待ちで15分以上CPU/GPUが完全待機（アイドル）してしまう深刻なボトルネックが発生していました。
+- **対策**:
+  - `--ple-io ram`: 27GBのPLEテーブルをMain RAMに常駐（起動時にシーケンシャル読込してmlock/全ページタッチ）させ、HDDの物理ランダムアクセスを完全排除（メモリアクセス直参照化）。搭載192GB RAMの潤沢なメモリ帯域をフル活用。
+  - `--prefill auto`: チャンクサイズをエンジンがVRAM状況から自動選択（この構成では8192を選択）。2048固定比で32Kプロンプト約+68%、128Kで約+79%（[ベンチマーク](bench/results/2026-10-04-amd-dual-9060xt-tuning/README.md)）。
+  - `"STRATA_WATCHDOG_S": "300"`: ウォッチドッグ判定時間を300秒に延長し、大規模プロンプトの安定処理を実現。
 
-| Your RAM | Take | Why |
-| --- | --- | --- |
-| **32 GB** | **Coder** | it fits 32 GB, and it is made for code (with a 24 GB card, Q2_0 and IQ2_XS run too) |
-| **48 GB** | **IQ2_XS** (or Q2_0, the fastest) | the larger sizes do not fit |
-| **64 GB** | **IQ2_XS** (recommended), or IQ3_XXS / IQ3_S | every size fits; IQ3_S is the best and the slowest |
-| **96 GB or more** | **IQ3_S**, or Unsloth's UD-IQ4_XS (~4-bit) | room for the largest sizes with everything else open |
+### 5. コンテキスト長の 256K (262,144 tokens) 拡張 & KV Streaming
+- **背景**: 長大なドキュメントや対話履歴を処理できるようにコンテキストを最大化。
+- **対策**:
+  - `--max-context 262144`: Qwen3.8-Flash-Next のネイティブ最大長である 256K に設定。
+  - `--kv int8 --kv-resident 32768`: 直近32,768トークンのみをVRAMに保持し、残りはホストRAM（192GB）へストリーミング退避することで、VRAM不足を起こさずに256Kを保持可能。
 
-- **[Coder](docs/MODELS.md#coder):** a coding version with half of the experts removed. It reaches 91% of the full
-  model's SWE-bench Verified score (measured by its authors) and fits 32 GB of RAM. It is weaker outside code,
-  including Chinese and other CJK text (#438). For those, take Q2_0, IQ2_XS or IQ3_S, which keep every expert.
-- **[Swift 1.5](docs/MODELS.md#swift-15):** a fine-tune that thinks for a much shorter time before it answers. You
-  get the answer sooner, at about the same quality.
-- **[Unsloth UD-IQ4_XS](docs/MODELS.md#unsloth-ud-iq4_xs):** Unsloth's ~4-bit version, between IQ3_S and
-  UD-Q4_K_XL in quality. A 94 GB download. With less than ~80 GB of RAM, Strata reads part of it from the SSD
-  while it answers, so it is slower there (an NVMe SSD helps).
-- **[Unsloth UD-Q4_K_XL](docs/MODELS.md#unsloth-ud-q4_k_xl-experimental)** (experimental): the closest to the full
-  model. But Strata reads most of it from the SSD while it answers, so it writes only 7-8.5 tokens/s on a 64 GB PC.
-- **[OrcaRouter's Uncensored IQ3_XXS](docs/MODELS.md#orcarouter-uncensored-iq3_xxs):** you set it up by hand. It is
-  not in the installer's menu.
+### 6. OpenClaw 連携設定 (`~/.openclaw/openclaw.json`)
+```json
+"strata": {
+  "baseUrl": "http://127.0.0.1:8081/v1",
+  "api": "openai-completions",
+  "apiKey": "<your-api-key>",
+  "models": [
+    {
+      "id": "qwen3.8-flash-next-iq3_s",
+      "name": "Qwen 3.8 Flash Next (Strata IQ3_S)",
+      "reasoning": true,
+      "input": ["text"],
+      "contextWindow": 262144,
+      "contextTokens": 262144,
+      "maxTokens": 8192,
+      "compat": {
+        "supportsUsageInStreaming": true,
+        "supportsTools": true,
+        "supportsJsonSchemaResponseFormat": true
+      }
+    }
+  ]
+}
+```
 
-Sizes, downloads and what fits where: [docs/MODELS.md](docs/MODELS.md). To add another model later, run
-`SETUP.bat` (Linux: `./setup.sh --setup`).
+### 7. 常駐サービス化 (`systemd --user`)
+マシンの再起動後も自動で軽量待機（VRAM 0%）できるように、ユーザーサービスとして登録：
+```bash
+# 配置と有効化
+mkdir -p ~/.config/systemd/user
+cp service/strata.service ~/.config/systemd/user/strata.service
+systemctl --user daemon-reload
+systemctl --user enable --now strata
 
-## Using it
+# サービス状態確認
+systemctl --user status strata
+```
 
-<p align="center"><img src="docs/media/runpagoda.png" width="900" alt="The Strata app's Monitor tab next to a coding agent"><br>
-<sub>The Strata app's <b>Monitor</b> (left) while a coding agent writes the pagoda garden from the video (right)</sub></p>
+---
 
-- **In the browser:** open `http://127.0.0.1:8080`. It has **Chat**, a live **Monitor** of the model and your
-  GPU/CPU/RAM, and **About** with the settings and addresses.
-- **Your apps and coding agents:** add an "OpenAI-compatible" provider with the base URL
-  **`http://127.0.0.1:8080/v1`**. Any API key and any model name work.
-  - Apps that use Anthropic's API: `http://127.0.0.1:8080/v1/messages` (Claude Code:
-    `ANTHROPIC_BASE_URL=http://127.0.0.1:8080`).
-  - Codex CLI and other apps that use the OpenAI Responses API: `/v1/responses`
-    ([setup](docs/DETAILS.md#the-responses-api-and-codex-cli)).
-- **Thinking:** choose **off, low, medium or high** in the chat menu or in your app's "reasoning effort". Off is the
-  fastest. High is best for hard questions.
-- **Pictures:** say yes to "Images?" in setup. Then click **Picture** in the chat, or attach pictures in your app.
-  AMD cards read pictures on Linux through the processor; on Windows they can't yet.
-- **From your phone or another PC:** `START-HERE.bat --setup --host 0.0.0.0 --api-key <secret>`. Always set a key.
-- **One request at a time:** by default Strata answers one request, and the others wait. To answer several at once,
-  set `"parallel": 2` ([BATCHING.md](docs/BATCHING.md)). On a 12 GB card this makes each answer slower.
-- **Long prompts:** Strata reads the first message of a chat in full, about 1 minute per 30,000 tokens. Follow-up
-  messages start in seconds.
+## 📊 ベンチマーク結果
 
-More: [where your chats are stored](docs/INSTALL.md#where-things-are-stored), [the API](docs/DETAILS.md#using-it).
+### 1. 同一ハードウェアにおける設定別パフォーマンス比較
 
-## Something went wrong?
+同一プロンプト（`bench/bench_prompts.jsonl`、256トークン生成）における実測結果：
 
-- **My PC froze the first time Strata started.** This is normal while it loads the model. Wait, and don't close the
-  window. Still frozen after 10 minutes? Restart the PC, close other programs and try again, or pick a smaller size.
-- **It stopped while downloading or installing.** Run `START-HERE.bat` (or `./setup.sh`) again. It continues where
-  it stopped.
-- **It's very slow and the disk light keeps blinking, or it says "the engine stopped unexpectedly".** Your PC does
-  not have enough free RAM. Close other programs (browsers use a lot), or pick a smaller size (Q2_0 or IQ2_XS).
-- **It says port 8080 is already in use.** Strata is already running. Look for its window.
+| 測定条件 | 生成速度 (tok/s) | MTP ドラフト採択率 | 待機時消費電力 (GPU1/GPU2) | 待機時 VRAM 使用率 |
+| :--- | :---: | :---: | :---: | :---: |
+| **① 初期デフォルト** (`--spec 4`, NUMA未調整) | **6.44 tok/s** | 90.9% | 常時ロード時: 約 15〜20W/枚 | 98% / 99% (常時専有) |
+| **② NUMAインターリーブのみ** (`--spec 4`, `numactl`) | **10.14 tok/s** (+57.5%) | 90.7% | 常時ロード時: 約 15〜20W/枚 | 98% / 99% (常時専有) |
+| **③ 投機・PCIe最適化** (`--spec 2`, `min-p 0.6`, `fine-grain`) | **9.24〜9.70 tok/s** | **94.1%** (+3.2pt) | **9.0W / 10.0W** (アイドル時) | **0% / 0%** (完全解放) |
+| **④ 現在構成** (`--ple-io ram`, 256K, int8 KV, on-demand) | **34.6〜38.1 tok/s** (初期比 **5.9倍**) | **92.3〜98.0%** | **9.0W / 10.0W** (アイドル時) | **0% / 0%** (完全解放) |
 
-More problems and their fixes: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md). Still stuck? Open an
-[issue](https://github.com/Niko1221/Strata/issues) and attach `strata-<model>.log` from the Strata folder. Found a
-security problem? Report it privately: [SECURITY.md](SECURITY.md).
+- **NUMAインターリーブ**: メモリアクセス競合とQPIバスのレイテンシを解消し、生成速度が **6.44 ➔ 10.14 tok/s (約 1.57 倍)** に向上。
+- **投機・PCIe最適化**: `--spec 2 --spec-min-p 0.6` により無駄な投機検証通信を削減し、ドラフト採択率が **94.1%** に向上。QPIバス負荷を抑制。
+- **PLE RAM常駐化 (`--ple-io ram`)**: 27GBのPLEテーブルをMain RAMに常駐させることで、PLEテーブル行参照に伴うHDD物理シーク待ち（約75〜100 IOPS）を完全解消。生成速度が **34.6〜38.1 tok/s (約 3.8 倍)** へ跳ね上がり、大規模Prefillも超高速化。
+- **オンデマンド省電力**: アイドル5分でVRAMを完全解放（0%）、**待機時電力を各GPU 9〜10Wに最小化**。
 
-## How does it work?
+### 2. プレフィル（Prefill）速度の比較 (超長文プロンプト)
 
-Models like this one usually run on servers with hundreds of gigabytes of graphics memory. Your graphics card has
-12-24 GB. Strata makes the model fit by **sharing the work across your whole PC**. Think of a kitchen: the things
-you use all the time stay on the counter, and the rest waits in the pantry.
+PLEテーブルをHDDから直接読むデフォルト（`--ple-io direct`）と、Main RAMに常駐させた現在構成（`--ple-io ram`）の実測比較：
 
-<p align="center"><img src="docs/media/how-it-works.svg" width="860" alt="The model's 24,576 experts: the busiest on the graphics card, all of them in RAM, a lookup table on the SSD"></p>
+| プロンプト長 | `--ple-io direct` (HDD ダイレクト) | 現在構成: `--ple-io ram` (Main RAM常駐) | 速度向上比 |
+| :--- | :---: | :---: | :---: |
+| **約 2.3K トークン** (2,291 tokens) | 約 25〜35 秒 | **6.0 秒** (379.1 tok/s) | **約 4〜5 倍** |
+| **約 20K トークン** (20,070 tokens) | 479 秒 (約8分) | **約 12 秒** (~1,600 tok/s) | **約 40 倍** |
+| **約 68K トークン** (68,231 tokens) | 15分以上 (タイムアウト寸前) | **32 秒** (~2,130 tok/s) | **約 30 倍以上** |
 
-- **The model is a team of 24,576 small specialists ("experts").** Each word needs only 10 of them.
-- **Your graphics card** keeps the few thousand experts that are used most often. **Your RAM** holds all of them,
-  and **your processor** works on the rest at the same time. **Your SSD** holds a big lookup table.
+### 3. OpenClaw 実稼働ベンチマーク (68Kトークン処理)
 
-<p align="center"><img src="docs/media/guess-and-check.svg" width="860" alt="A small helper guesses the next words; the big model checks them all at once and keeps the right ones"></p>
+- **入力プロンプト長**: 68,231 トークン (OpenClaw 超長文システムプロンプト & 履歴 & ツール定義)
+- **プレフィル時間**: **32 秒** (HDDシーク待ちゼロ、CPU/GPUフル稼働)
+- **生成速度 (Decode)**: **35.2 〜 37.5 tok/s** (ツール呼び出し・推論含む)
+- **Expert Cache ヒット率**: **92.4% 〜 93.4%**
+- **動作フロー**:
+  - OpenClawからのリクエスト受信 ➔ C++エンジン自動起動＆27GB PLEテーブルRAMロード (約60秒) ➔ 68Kトークン即座にプレフィル (32秒) ➔ 高速生成 (35〜37 tok/s) ➔ 応答完了後5分で自動アンロード (VRAM 0%、GPU電力 9W/10W)。
 
-- **Guess, then check:** a small helper guesses the next few words. The big model checks them all at once. You get
-  the same answer, 1.6-1.8x sooner.
-- **Long texts are read in big pieces** (up to 8,192 tokens at a time), at over 1,000 tokens per second.
 
-The longer explanation: [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md). Every part and its numbers:
-[the details](docs/DETAILS.md#how-it-works) and the [paper](docs/paper/Strata-Paper.pdf).
+---
 
-## Credits and license
+## 🆕 2026-10-04 更新: OSレベル修正3件と `--prefill auto`
 
-The model is [Qwen3.8-Flash-Next](https://huggingface.co/Qwen/Qwen3.8-Flash-Next) by the Qwen team. It was
-compressed by [ISTA-DASLab](https://huggingface.co/ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF), UkisAI (Swift 1.5)
-and Unsloth. Strata uses parts of [llama.cpp / ggml](https://github.com/ggml-org/llama.cpp). All credits:
-[docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md#credits). Strata is open source under the [MIT License](LICENSE). A few
-parts and every model have their own licenses ([which ones](docs/HOW_IT_WORKS.md#license)).
+上記の構成に、OSレベルの修正3件を追加した。詳細・全データは
+[ベンチマークレポート](bench/results/2026-10-04-amd-dual-9060xt-tuning/README.md)（コミュニティ形式、before/after各9ラン + リコール検査）。
 
-## Support Strata
+### 8. PLEテーブルのmlock失敗解消 (`LimitMEMLOCK` + `limits.d`)
+- **背景**: PLEテーブルは約28.8 GiB（320,001,536行 × 90 B）だが、セッションのmemlock上限は約23.6 GiBで `PLE table mlock failed` が発生し、メモリ圧迫時にテーブルがスワップアウトしてデコードが 4.3 tok/s まで崩落した。
+- **対策**（ユーザーレベルのsystemdはセッションのハード上限までしか上げられないため、`limits.d` が本体）:
+```bash
+# /etc/security/limits.d/99-strata-memlock.conf
+your_name soft memlock unlimited
+your_name hard memlock unlimited
 
-Strata is free and open source. If it is useful to you, you can support its development:
+# ~/.config/systemd/user/strata.service の [Service] に
+LimitMEMLOCK=infinity
+```
+- **結果**: エンジンログが `PLE table locked in RAM` に変化。退避によるストールが解消。
 
-<p align="center"><a href="https://buymeacoffee.com/strataengine"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50"></a></p>
+### 9. 2 MiB Hugepages（エキスパートアリーナ）
+- **背景**: エキスパートアリーナは 23,983 × 2 MiB（約47 GiB）の巨大ページを要求するが、`vm.nr_hugepages=0` で4 KBページにフォールバックしていた。
+- **注意**: 稼働中の `sysctl -w` ではメモリ断片化で 5,786 / 24,000 ページしか確保できず（エンジンは全数確保でないとhugepagesを使わない）、**ブート時確保が必須**:
+```bash
+# /etc/sysctl.d/99-strata-hugepages.conf
+vm.nr_hugepages=24000
+```
+- **結果**: 再起動後 `hugetlb 2 MB pages` を確認。`HugePages_Free: 17`（23,983ページをエンジンが確保）。
+
+### 10. `--prefill 2048` ➔ `--prefill auto`（チャンク8192自動選択）
+- エンジンがVRAM状況から最大のチャンクを自動選択（この構成では8192、expert cacheから4.69 GiB/GPU借用）。
+- 実測（同一スクリプト・毎回新規プロンプト、中央値）:
+
+| プロンプト長 | `--prefill 2048` | `--prefill auto` (8192) | 向上 |
+| :--- | :---: | :---: | :---: |
+| 4,096 トークン | 529 tok/s | **609 tok/s** | +15% |
+| 32,768 トークン | 633 tok/s | **1,065 tok/s** | **+68%** |
+| 128,000 トークン | 657 tok/s | **1,174 tok/s** | **+79%** |
+
+- デコード速度は変化なし（36〜40 tok/s、設計通り）。ニードルリコール検査は 32K/128K × 深さ10/50/90% で **6/6 正解**。
+- 起動時のPLEテーブルロードは 45〜592 秒 ➔ **0.7 秒**（RAM常駐+hugepages、ウォーム時）。
+
+### 補足（現状構成の是正）
+- 現在の稼働構成は `--spec 4 --spec-min-p 0.5`（上記「2. 投機的サンプリング」時点の `--spec 2 / 0.6` から戻した。ドラフト採択率 72〜84% で問題なし）。
+- 実測ハード仕様: CPUは **Xeon E5-2687W v4 ×2（24コア/48スレッド）**、RAM **188 GiB**、カーネル **7.0.0-30-generic**（冒頭の環境表は旧計測値）。
