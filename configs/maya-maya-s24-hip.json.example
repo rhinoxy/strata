@@ -4,11 +4,11 @@
   "--glm-pack",
   "/path/to/models/Maya-S24/pack",
   "--max-context",
-  "32768",
+  "524288",
   "--expert-cache",
   "auto",
   "--prefill",
-  "auto",
+  "2048",
   "--kv-streaming",
   "on",
   "--expert-profile",
@@ -42,9 +42,8 @@
  "api_key": "<your-strata-api-key>",
  "backend": "hip",
  "env": {
-  "STRATA_GLM_RESERVE_MB": "3072",
+  "STRATA_GLM_RESERVE_MB": "512",
   "STRATA_GLM_RAM_HEADROOM_GB": "16",
-  "STRATA_GLM_RAM_RESIDENT": "1",
-  "HSA_FORCE_FINE_GRAIN_PCIE": "1"
+  "STRATA_GLM_RAM_RESIDENT": "1"
  }
 }
