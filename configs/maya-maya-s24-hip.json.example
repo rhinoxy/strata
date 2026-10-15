@@ -1,0 +1,50 @@
+{
+ "exe": "/path/to/project-maya/build-hip/strata",
+ "args": [
+  "--glm-pack",
+  "/path/to/models/Maya-S24/pack",
+  "--max-context",
+  "32768",
+  "--expert-cache",
+  "auto",
+  "--prefill",
+  "auto",
+  "--kv-streaming",
+  "on",
+  "--expert-profile",
+  "/path/to/project-maya/data/expert-profile-glm.bin"
+ ],
+ "cwd": "/path/to/project-maya",
+ "tokenizer": "/path/to/models/Maya-S24/pack/tokenizer",
+ "model_name": "glm-5.3-flash",
+ "lazy_load": true,
+ "before_load": "/path/to/Strata/tools/ensure_exclusive.sh strata",
+ "model_aliases": [
+  "glm-5.3-flash",
+  "maya/glm-5.3-flash",
+  "glm5.3-flash",
+  "Maya-S24"
+ ],
+ "gpu": [
+  1,
+  2
+ ],
+ "sampling": {
+  "temperature": 1.0,
+  "top_p": 0.95
+ },
+ "reasoning_effort": "high",
+ "lib_dirs": [
+  "/opt/rocm/lib"
+ ],
+ "port": 8082,
+ "host": "0.0.0.0",
+ "api_key": "<your-strata-api-key>",
+ "backend": "hip",
+ "env": {
+  "STRATA_GLM_RESERVE_MB": "3072",
+  "STRATA_GLM_RAM_HEADROOM_GB": "16",
+  "STRATA_GLM_RAM_RESIDENT": "1",
+  "HSA_FORCE_FINE_GRAIN_PCIE": "1"
+ }
+}

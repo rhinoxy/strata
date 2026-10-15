@@ -1,147 +1,124 @@
-# OpenClaw Integration & On-Demand Power-Saving Guide
+# OpenClaw Integration & Multi-Model Coexistence Guide
 
-このドキュメントでは、Strata（`Qwen3.8-Flash-Next`）を [OpenClaw](https://github.com/openclaw/openclaw) から利用し、GPU待機電力を最小限に抑えるための**オンデマンド起動・自動VRAM解放（アイドルアンロード）**の設定手順と運用方法を説明します。
+このドキュメントでは、Strata（`Qwen3.8-Flash-Next`）および Project Maya（`GLM-5.3-Flash`）を [OpenClaw](https://github.com/openclaw/openclaw) から利用し、GPU待機電力を最小限に抑えつつ、相互排他切り替えで共存運用するための設定手順と運用方法を説明します。
 
 ---
 
 ## ⚡ 背景と目的
 
-- **課題**: 80GB規模のモデル（Qwen3.8-Flash-Next）をデュアルGPU環境で常時VRAMにロードしていると、待機時でもGPU電力が消費されます。
+- **課題**: 80GB〜90GB規模のモデル（Qwen3.8-Flash-Next / GLM-5.3-Flash）をデュアルGPU環境で運用する場合、2つのモデルを同時にロードするとVRAM/RAMが枯渇します。
 - **解決策**:
-  - **遅延ロード (`lazy_load: true`)**: サーバー起動時はPythonのHTTPリスナー（数十MB RAM）のみが待機し、VRAMは0%、GPU消費電力は最小（各9W〜10W）。
-  - **オンデマンド・ロード**: OpenClaw等のクライアントから `/v1/chat/completions` リクエストが届いた瞬間にStrataエンジンが自動起動し、モデルをロード（約60秒）。
-  - **アイドル時自動アンロード (`idle_unload_s: 300`)**: リクエスト完了後、指定秒数（デフォルト5分）アクセスが途絶えると自動でC++エンジンを終了し、VRAMを完全解放。
+  - **遅延ロード (`lazy_load: true`)**: サーバー起動時はHTTPリスナーのみが待機し、VRAMは0%、GPU待機電力を最小化。
+  - **相互排他ロード (`before_load`)**: Qwen起動時はGLMを自動アンロードし、GLM起動時はQwenを自動アンロード。相手が確実にアンロードされてVRAMが解放された後に自身のロードを開始。
+  - **常駐性とS3サスペンド耐性**: アイドル時間による強制アンロードを行わないことで、作業中の再ロード待ち（10〜15分）を排除。Linuxカーネル（amdgpu）のVRAM退避機能により、モデルが載ったままS3サスペンドに入っても復帰後にそのまま推論を継続可能。
 
 ---
 
-## ⚙️ Strata 設定 (`strata-iq3_s.json`)
+## 🔄 相互排他アンロードスクリプト (`tools/ensure_exclusive.sh`)
+
+一方のモデルがロードを開始する直前に、もう一方のモデルを確実にアンロード（VRAM 0MBに解放）します。
+
+```bash
+# Strataが起動する直前: Mayaをアンロード
+tools/ensure_exclusive.sh maya
+
+# Mayaが起動する直前: Strataをアンロード
+tools/ensure_exclusive.sh strata
+```
+
+---
+
+## ⚙️ サーバー設定
+
+### 1. Strata (Qwen 3.8 Flash Next / Port 8081)
+`configs/strata-iq3_s.json.example` を参照：
+```json
+{
+  "model_name": "qwen3.8-flash-next-iq3_s",
+  "port": 8081,
+  "lazy_load": true,
+  "before_load": "/path/to/Strata/tools/ensure_exclusive.sh maya",
+  "gpu": [1, 2]
+}
+```
+
+### 2. Project Maya (GLM-5.3-Flash / Port 8082)
+`configs/maya-maya-s24-hip.json.example` を参照：
+```json
+{
+  "model_name": "glm-5.3-flash",
+  "port": 8082,
+  "lazy_load": true,
+  "before_load": "/path/to/Strata/tools/ensure_exclusive.sh strata",
+  "gpu": [1, 2],
+  "env": {
+    "STRATA_GLM_RAM_RESIDENT": "1",
+    "HSA_FORCE_FINE_GRAIN_PCIE": "1"
+  }
+}
+```
+
+---
+
+## 🛠️ OpenClaw Gateway への登録 (`openclaw.json`)
+
+OpenClaw Gateway（別マシンまたは同一マシン）のプロバイダ設定に両モデルを登録します：
 
 ```json
 {
-  "exe": "/home/your_name/Strata/engine/strata",
-  "args": [
-    "--pack", "/home/your_name/Strata-data/packs/iq3_s",
-    "--native", "/home/your_name/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf",
-    "--ple-gguf", "/home/your_name/Strata-data/models/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf",
-    "--expert-profile", "/home/your_name/Strata/data/expert-profile.bin",
-    "--expert-cache", "auto",
-    "--prefill", "auto",
-    "--ple-io", "ram",
-    "--spec", "2",
-    "--spec-min-p", "0.6",
-    "--mtp", "/home/your_name/Strata-data/mtp/rt",
-    "--max-context", "262144",
-    "--kv", "int8",
-    "--kv-resident", "32768"
-  ],
-  "cwd": "/home/your_name/Strata",
-  "tokenizer": "/home/your_name/Strata-data/packs/iq3_s/tokenizer",
-  "model_name": "qwen3.8-flash-next-iq3_s",
-  "log": "/home/your_name/Strata/strata-iq3_s.log",
-  "lib_dirs": [
-    "/opt/rocm/lib"
-  ],
-  "host": "0.0.0.0",
-  "port": 8081,
-  "api_key": "<your-api-key>",
-  "allowed_hosts": ["*"],
-  "backend": "hip",
-  "env": {
-    "STRATA_HIPBLASLT_TUNING": "/home/your_name/Strata/tools/hip/gfx1200-hipblaslt-100202.txt",
-    "HSA_FORCE_FINE_GRAIN_PCIE": "1",
-    "STRATA_WATCHDOG_S": "300"
-  },
-  "gpu": [1, 2],
-  "gpus_asked": true,
-  "layer_split": "auto",
-  "lazy_load": true,
-  "idle_unload_s": 300
-}
-```
-
-### 重要な最適化パラメータ
-1. `"lazy_load": true`: 起動時にモデルをロードせず、最初のリクエスト受信時にロード。
-2. `"idle_unload_s": 300`: アイドル5分で自動アンロード。
-3. `"--prefill", "auto"`: OpenClawの巨大なシステムプロンプト（2万トークン超）処理時、チャンクをエンジンがVRAM状況から自動選択（この構成では8192）。2048固定より約1.7倍高速（`bench/results/2026-10-04-amd-dual-9060xt-tuning/` 参照）。
-4. `"--ple-io", "ram"`: 27GBのPLEテーブルをMain RAMに常駐（mlock/キャッシュ）させ、HDD物理シーク待ちレイテンシをゼロ化して超長文Prefillを高速化。
-5. `"STRATA_WATCHDOG_S": "300"`: 大規模プロンプト処理時のウォッチドッグ誤検知（デフォルト60s）を回避。
-
----
-
-## 🛠️ OpenClaw への登録 (`~/.openclaw/openclaw.json`)
-
-`models.providers` セクションに以下を追加します：
-
-```json
-"strata": {
-  "baseUrl": "http://127.0.0.1:8081/v1",
-  "api": "openai-completions",
-  "apiKey": "<your-api-key>",
-  "models": [
-    {
-      "id": "qwen3.8-flash-next-iq3_s",
-      "name": "Qwen 3.8 Flash Next (Strata IQ3_S)",
-      "reasoning": true,
-      "input": [
-        "text"
-      ],
-      "cost": {
-        "input": 0,
-        "output": 0,
-        "cacheRead": 0,
-        "cacheWrite": 0
+  "models": {
+    "providers": {
+      "strata": {
+        "baseUrl": "http://<host-ip>:8081/v1",
+        "apiKey": "<your-strata-api-key>",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "qwen3.8-flash-next-iq3_s",
+            "name": "Qwen 3.8 Flash Next (Strata)"
+          }
+        ]
       },
-      "contextWindow": 262144,
-      "contextTokens": 262144,
-      "maxTokens": 8192,
-      "compat": {
-        "supportsUsageInStreaming": true,
-        "supportsTools": true,
-        "supportsJsonSchemaResponseFormat": true
+      "maya": {
+        "baseUrl": "http://<host-ip>:8082/v1",
+        "apiKey": "<your-strata-api-key>",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "glm-5.3-flash",
+            "name": "GLM-5.3-Flash (Maya)"
+          }
+        ]
       }
     }
-  ]
+  }
 }
 ```
 
 ---
 
-## 🚀 サービス常駐化 (systemd --user)
+## 🚀 systemd ユーザーサービスとしての常駐化
 
-再起動後も常時待機できるように、ユーザーサービスとして登録します。
-
-### 1. ユニットファイルの配置
 ```bash
 mkdir -p ~/.config/systemd/user
-cp service/strata.service ~/.config/systemd/user/strata.service
+cp service/strata.service ~/.config/systemd/user/
+cp service/maya.service ~/.config/systemd/user/
 systemctl --user daemon-reload
+systemctl --user enable --now strata maya
 ```
-
-### 2. 起動と自動起動の有効化
-```bash
-systemctl --user enable --now strata
-```
-
-### 3. ステータス確認
-```bash
-systemctl --user status strata
-```
-待機時は `VRAM 0%`、CPU使用率ほぼ `0%` でポート8081をリッスンします。
 
 ---
 
-## 💻 実行例
+## 💻 運用と動作検証
 
-### OpenClaw CLI からの実行
+### 1. 手動でのアンロード確認
 ```bash
-# ヘッドレス実行
-openclaw agent exec --model strata/qwen3.8-flash-next-iq3_s "質問文"
+# Strata (Qwen) のアンロード
+curl -s -X POST http://127.0.0.1:8081/unload -H "Content-Type: application/json" -H "Authorization: Bearer <your-key>" -d "{}"
 
-# 対話セッション
-openclaw agent --model strata/qwen3.8-flash-next-iq3_s -m "こんにちは"
+# Maya (GLM) のアンロード
+curl -s -X POST http://127.0.0.1:8082/unload -H "Content-Type: application/json" -H "Authorization: Bearer <your-key>" -d "{}"
 ```
 
-### 手動での即座アンロード（VRAM即時解放）
-```bash
-curl -s -X POST http://127.0.0.1:8081/unload -H "Content-Type: application/json" -d "{}"
-```
+### 2. S3サスペンドについての補足
+- AMD GPU（amdgpuドライバ）環境では、モデルがVRAM/RAMにロードされた状態でS3サスペンド（Suspend to RAM）に入っても、ドライバによるメモリ保護機能により、レジューム復帰後に正常に推論を再開できます。

@@ -1,0 +1,13 @@
+[Unit]
+Description=Project Maya GLM-5.3-Flash Inference Server (On-Demand / Lazy Load)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/project-maya
+ExecStart=%h/project-maya/run-maya-maya-s24-hip.sh
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target

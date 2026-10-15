@@ -1,3 +1,4 @@
 #!/bin/sh
-cd "/home/k-takeda/Strata"
-exec numactl --interleave=all "/home/k-takeda/Strata/.venv/bin/python" "/home/k-takeda/Strata/serve/server.py" "--engine" "strata" "--config" "/home/k-takeda/Strata/strata-iq3_s.json" "--port" "8081" "$@"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+exec numactl --interleave=all "$SCRIPT_DIR/.venv/bin/python" "$SCRIPT_DIR/serve/server.py" "--engine" "strata" "--config" "$SCRIPT_DIR/strata-iq3_s.json" "--port" "8081" "$@"
