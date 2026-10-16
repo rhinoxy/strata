@@ -8,7 +8,9 @@
   "--expert-cache",
   "auto",
   "--prefill",
-  "2048",
+  "4096",
+  "--kv",
+  "int8",
   "--kv-streaming",
   "on",
   "--expert-profile",
@@ -44,6 +46,8 @@
  "env": {
   "STRATA_GLM_RESERVE_MB": "512",
   "STRATA_GLM_RAM_HEADROOM_GB": "16",
-  "STRATA_GLM_RAM_RESIDENT": "1"
+  "STRATA_GLM_RAM_RESIDENT": "1",
+  "STRATA_GLM_SLOT_DIR": "/dev/shm/maya-slots",
+  "STRATA_GLM_PREFILL_SUB": "1024"
  }
 }
