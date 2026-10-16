@@ -1,0 +1,52 @@
+{
+  "benchmark_name": "Project Maya GLM-5.3-Flash Dual-GPU Tuning",
+  "date": "2026-10-16",
+  "hardware": {
+    "cpu": "Intel Xeon E5-2687W v4 (24C/48T, Dual-Socket NUMA)",
+    "ram_gb": 188.8,
+    "gpu": "2x AMD Radeon RX 9060 XT (16GB VRAM each, PCIe 3.0)",
+    "pcie_interface": "PCIe 3.0 x16 per GPU"
+  },
+  "model": {
+    "name": "glm-5.3-flash",
+    "pack": "Maya-S24 (IQ2_XXS_S)",
+    "experts_total": 12096,
+    "context_tokens": 524288
+  },
+  "comparison": {
+    "before_tuning": {
+      "expert_pool_gb_per_gpu": 9.21,
+      "vram_slots_total": 2763,
+      "vram_hit_rate_pct": 57.42,
+      "ram_fetches_per_tok": 67.03,
+      "kv_cache_type": "fp16",
+      "kv_cache_pinned_gb": 3.22,
+      "slot_storage": "HDD",
+      "slot_save_time_85k_sec": 8.0,
+      "prefill_chunk": 2048,
+      "prefill_sub": 256,
+      "decode_tok_per_sec": 16.91
+    },
+    "after_tuning": {
+      "expert_pool_gb_per_gpu": 11.78,
+      "vram_slots_total": 3537,
+      "vram_hit_rate_pct": 71.05,
+      "ram_fetches_per_tok": 40.39,
+      "kv_cache_type": "int8",
+      "kv_cache_pinned_gb": 1.71,
+      "slot_storage": "tmpfs (/dev/shm)",
+      "slot_save_time_85k_sec": 0.7,
+      "prefill_chunk": 4096,
+      "prefill_sub": 1024,
+      "decode_tok_per_sec": 22.32
+    }
+  },
+  "improvements": {
+    "vram_expert_pool_increase_pct": 27.9,
+    "vram_hit_rate_improvement_pct": 13.63,
+    "ram_pcie_fetch_reduction_pct": 39.74,
+    "kv_cache_reduction_pct": 46.89,
+    "slot_save_latency_reduction_pct": 91.25,
+    "decode_speedup_pct": 31.99
+  }
+}
