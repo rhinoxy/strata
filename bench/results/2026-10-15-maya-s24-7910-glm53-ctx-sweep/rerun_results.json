@@ -1,0 +1,54 @@
+{
+ "idle_before": {},
+ "idle_after": {},
+ "sweep": [
+  {
+   "tag": "calibration",
+   "target": 0,
+   "wall_s": 13.64,
+   "prompt_tokens": 275,
+   "completion_tokens": 1,
+   "spec_accepted": 0,
+   "spec_total": 0,
+   "spec_req_lines": 0,
+   "spec_pct": null,
+   "finish": "length",
+   "server": {
+    "prompt_tokens": 276,
+    "reused": 0,
+    "prompt_ms": 5148.7,
+    "prefill_tok_s": 53.6,
+    "decode_ms": 0.0,
+    "decode_tok_s": null,
+    "output_tokens": 1,
+    "finish": "length",
+    "hit_rate": null
+   }
+  },
+  {
+   "tag": "ctx131072",
+   "target": 131072,
+   "wall_s": 325.58,
+   "prompt_tokens": 129697,
+   "completion_tokens": 512,
+   "spec_accepted": 333,
+   "spec_total": 510,
+   "spec_req_lines": 1,
+   "spec_pct": 65.3,
+   "finish": "length",
+   "server": {
+    "prompt_tokens": 129697,
+    "reused": 0,
+    "prompt_ms": 295504.3,
+    "prefill_tok_s": 438.9,
+    "decode_ms": 29900.0,
+    "decode_tok_s": 17.1,
+    "output_tokens": 512,
+    "finish": "length",
+    "hit_rate": null
+   }
+  }
+ ],
+ "para_tokens": 85.0,
+ "started": null
+}
