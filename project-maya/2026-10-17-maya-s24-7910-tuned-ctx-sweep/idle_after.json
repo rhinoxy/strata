@@ -1,0 +1,8 @@
+{
+ "gpu1_power_w": 20.03,
+ "gpu1_n": 30,
+ "gpu2_power_w": 24.07,
+ "gpu2_n": 30,
+ "card0_vram_used_mb": 16085.0,
+ "card2_vram_used_mb": 15994.3
+}

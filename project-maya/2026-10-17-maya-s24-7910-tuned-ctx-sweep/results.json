@@ -1,0 +1,137 @@
+{
+ "idle_before": {
+  "gpu1_power_w": 25.87,
+  "gpu1_n": 30,
+  "gpu2_power_w": 24.8,
+  "gpu2_n": 30,
+  "card0_vram_used_mb": 16132.0,
+  "card2_vram_used_mb": 15994.2
+ },
+ "idle_after": {
+  "gpu1_power_w": 20.03,
+  "gpu1_n": 30,
+  "gpu2_power_w": 24.07,
+  "gpu2_n": 30,
+  "card0_vram_used_mb": 16085.0,
+  "card2_vram_used_mb": 15994.3
+ },
+ "sweep": [
+  {
+   "tag": "calibration",
+   "target": 0,
+   "wall_s": 5.99,
+   "prompt_tokens": 275,
+   "completion_tokens": 1,
+   "spec_accepted": 0,
+   "spec_total": 0,
+   "spec_req_lines": 0,
+   "spec_pct": null,
+   "finish": "length",
+   "server": {
+    "prompt_tokens": 275,
+    "reused": 0,
+    "prompt_ms": 5424.8,
+    "prefill_tok_s": 50.7,
+    "decode_ms": 0.0,
+    "decode_tok_s": null,
+    "output_tokens": 1,
+    "finish": "length",
+    "hit_rate": null
+   }
+  },
+  {
+   "tag": "ctx2048",
+   "target": 2048,
+   "wall_s": 34.26,
+   "prompt_tokens": 2185,
+   "completion_tokens": 512,
+   "spec_accepted": 318,
+   "spec_total": 510,
+   "spec_req_lines": 1,
+   "spec_pct": 62.4,
+   "finish": "length",
+   "server": {
+    "prompt_tokens": 2185,
+    "reused": 0,
+    "prompt_ms": 8858.4,
+    "prefill_tok_s": 246.7,
+    "decode_ms": 25394.3,
+    "decode_tok_s": 20.2,
+    "output_tokens": 512,
+    "finish": "length",
+    "hit_rate": 0.739
+   }
+  },
+  {
+   "tag": "ctx8192",
+   "target": 8192,
+   "wall_s": 43.63,
+   "prompt_tokens": 8316,
+   "completion_tokens": 512,
+   "spec_accepted": 335,
+   "spec_total": 510,
+   "spec_req_lines": 1,
+   "spec_pct": 65.7,
+   "finish": "length",
+   "server": {
+    "prompt_tokens": 8316,
+    "reused": 0,
+    "prompt_ms": 19526.7,
+    "prefill_tok_s": 425.9,
+    "decode_ms": 23891.1,
+    "decode_tok_s": 21.4,
+    "output_tokens": 512,
+    "finish": "length",
+    "hit_rate": 0.77
+   }
+  },
+  {
+   "tag": "ctx32768",
+   "target": 32768,
+   "wall_s": 89.16,
+   "prompt_tokens": 32592,
+   "completion_tokens": 512,
+   "spec_accepted": 376,
+   "spec_total": 535,
+   "spec_req_lines": 2,
+   "spec_pct": 70.3,
+   "finish": "length",
+   "server": {
+    "prompt_tokens": 32592,
+    "reused": 0,
+    "prompt_ms": 59654.6,
+    "prefill_tok_s": 546.3,
+    "decode_ms": 24433.2,
+    "decode_tok_s": 21.0,
+    "output_tokens": 512,
+    "finish": "length",
+    "hit_rate": 0.753
+   }
+  },
+  {
+   "tag": "ctx131072",
+   "target": 131072,
+   "wall_s": 255.31,
+   "prompt_tokens": 129696,
+   "completion_tokens": 512,
+   "spec_accepted": 371,
+   "spec_total": 535,
+   "spec_req_lines": 2,
+   "spec_pct": 69.3,
+   "finish": "length",
+   "server": {
+    "prompt_tokens": 129696,
+    "reused": 0,
+    "prompt_ms": 226842.5,
+    "prefill_tok_s": 571.7,
+    "decode_ms": 25514.7,
+    "decode_tok_s": 20.1,
+    "output_tokens": 512,
+    "finish": "length",
+    "hit_rate": 0.766
+   }
+  }
+ ],
+ "para_tokens": 85.0,
+ "started": null
+}
