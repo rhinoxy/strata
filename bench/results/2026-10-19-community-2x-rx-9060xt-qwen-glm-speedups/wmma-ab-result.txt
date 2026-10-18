@@ -1,0 +1,5 @@
+=== WMMA A/B 2026-10-19 02:12:10.407683 ===
+WMMA=1 prompt tok/s: [320.2, 347.5, 347.0]
+WMMA=0 prompt tok/s: [12.9, 329.9, 329.8]
+mean (2nd-3rd runs, 1st = warm-up): WMMA=1 347.3 vs WMMA=0 329.8 tok/s (+5.3%)
+config restored to STRATA_HIP_WMMA=1; strata engine left unloaded.
