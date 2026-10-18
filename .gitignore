@@ -62,3 +62,6 @@ build-vision-cuda12.bat
 /.ccache/
 /.rocm-win/
 *.so
+
+# local Windows HIP packaging output
+dist-hip/
