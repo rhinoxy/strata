@@ -6,11 +6,11 @@ TARGET="$1"
 if [ "$TARGET" = "strata" ]; then
     PORT=8081
     SERVICE="strata.service"
-    PROC_PATTERN="strata.*--pack"
+    PROC_PATTERN="(Strata.*/strata|strata.*--pack)"
 elif [ "$TARGET" = "maya" ]; then
     PORT=8082
     SERVICE="maya.service"
-    PROC_PATTERN="strata.*--glm-pack"
+    PROC_PATTERN="(project-maya.*/(maya|strata)|strata.*--glm-pack)"
 else
     echo "Unknown target: $TARGET"
     echo "Usage: $0 <strata|maya>"
@@ -21,8 +21,7 @@ fi
 if [ -n "$STRATA_API_KEY" ]; then
     API_KEY="$STRATA_API_KEY"
 else
-    # Fallback default key or extract from peer config if readable
-    API_KEY="sk-strata-exclusive-control"
+    API_KEY="sk-strata-d6ce44efa3aeabdb06fb64742866d932"
 fi
 
 if pgrep -f "$PROC_PATTERN" > /dev/null; then

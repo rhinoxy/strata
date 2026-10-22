@@ -44,10 +44,15 @@
  "api_key": "<your-strata-api-key>",
  "backend": "hip",
  "env": {
+  "HSA_ENABLE_P2P": "0",
+  "LD_PRELOAD": "/path/to/project-maya/tools/libkfd_ignore_rx6400.so",
   "STRATA_GLM_RESERVE_MB": "512",
+  "STRATA_GLM_PREFILL_SUB": "1024",
   "STRATA_GLM_RAM_HEADROOM_GB": "16",
   "STRATA_GLM_RAM_RESIDENT": "1",
   "STRATA_GLM_SLOT_DIR": "/dev/shm/maya-slots",
-  "STRATA_GLM_PREFILL_SUB": "1024"
- }
+  "STRATA_GLM_SPEC_CANCEL": "1",
+  "STRATA_GLM_SPEC_SAMPLE": "1"
+ },
+ "log": "/path/to/project-maya/maya-maya-s24-hip.log"
 }

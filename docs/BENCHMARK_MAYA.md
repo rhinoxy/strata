@@ -14,7 +14,7 @@
   - `CUDA1`: GPU 2 (Layers 24〜44 + NextN MTP 担当, NUMA node 1 結合)
 - **Model**: GLM-5.3-Flash (Maya-S24 / IQ2_XXS_S / 12,096 Experts)
 - **Context Length**: **524,288 tokens (512K)**
-- **Runtime**: Project Maya 1.1.11 (HIP / ROCm backend)
+- **Runtime**: Project Maya 1.1.21 (HIP / ROCm 7.2.4 backend)
 
 ---
 
@@ -99,11 +99,31 @@
  "api_key": "<your-strata-api-key>",
  "backend": "hip",
  "env": {
+  "HSA_ENABLE_P2P": "0",
+  "LD_PRELOAD": "/path/to/project-maya/tools/libkfd_ignore_rx6400.so",
   "STRATA_GLM_RESERVE_MB": "512",
+  "STRATA_GLM_PREFILL_SUB": "1024",
   "STRATA_GLM_RAM_HEADROOM_GB": "16",
   "STRATA_GLM_RAM_RESIDENT": "1",
   "STRATA_GLM_SLOT_DIR": "/dev/shm/maya-slots",
-  "STRATA_GLM_PREFILL_SUB": "1024"
- }
+  "STRATA_GLM_SPEC_CANCEL": "1",
+  "STRATA_GLM_SPEC_SAMPLE": "1"
+ },
+ "log": "/path/to/project-maya/maya-maya-s24-hip.log"
 }
 ```
+
+---
+
+## 🛠️ Project Maya v1.1.21 + ROCm 7.2.4 ビルドの要点
+
+1. **ROCm 7.2.4 Clang 24 互換ヘッダー宣言**:
+   - `include/strata/hip_compat/cuda_runtime.h` において、ROCm 7.2.4 の Clang が HIP モード時に省略する OCML f32 ヘルパー（`__ocml_exp10_f32`, `__ocml_log_f32`, `__ocml_log10_f32`, `__ocml_log2_f32`）の前方宣言が必要です。
+2. **実行ファイル名の変更対応**:
+   - Upstream v1.1.21 ではビルドターゲットが `strata` から `maya` に変更されました。
+   - 既存設定との互換性を保つため、ビルド後にシンボリックリンク `ln -sf maya build-hip/strata` を作成します。
+3. **RX 6400 userptr 保護シム (`libkfd_ignore_rx6400.so`)**:
+   - 画面表示専用カード（GPU 0: RX 6400）の KFD 登録上限回避のため、`tools/libkfd_ignore_rx6400.so` を `LD_PRELOAD` で適用します。
+4. **オンデマンド排他制御**:
+   - `serve/server.py` の `ensure_engine` フックにより、推論リクエスト受信時に `tools/ensure_exclusive.sh strata` が実行され、Strata の VRAM を解放した上で Project Maya が起動します。
+   - 待機時は `/unload` エンドポイントまたはアイドル自動アンロードにより VRAM 0% を維持します。
