@@ -11,6 +11,20 @@
 #endif
 #include <hip/hip_runtime.h>
 #include <hip/hip_version.h>
+
+/* ROCm 7.2.4 (clang 24, core-10.1) ships __clang_hip_libdevice_declares.h without the f32
+ * OCML declarations that hip_bf16.h's bf16 math helpers reference (hip_fp8/hipblaslt pull
+ * that header in; the same ROCm's clang 22 headers declare them and the ocml bitcode
+ * carries the symbols). Declared here, force-included ahead of every HIP TU of this
+ * build, so the identifiers are known before amd_hip_bf16.h is parsed; the device link
+ * resolves against the bitcode. Local patch 2026-10-22 (strata v0.2.2 merge, gfx1200). */
+#if defined(__HIP__)
+__device__ __attribute__((pure)) float __ocml_exp10_f32(float);
+__device__ __attribute__((pure)) float __ocml_log_f32(float);
+__device__ __attribute__((pure)) float __ocml_log10_f32(float);
+__device__ __attribute__((pure)) float __ocml_log2_f32(float);
+#endif
+
 // Do not let HIP's legacy macro corrupt libstdc++ attribute names.
 #ifdef __noinline__
 #undef __noinline__
