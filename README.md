@@ -24,6 +24,7 @@
 sudo apt update
 sudo apt install -y build-essential cmake git numactl rocm-dev hipblaslt-dev
 ```
+```
 
 ### 2. リポジトリのビルド (HIP / gfx1200)
 ```bash
