@@ -1121,3 +1121,10 @@ For scale, the same yardstick with the bf16 read on both sides and only the expe
 engine takes whenever an expert is not resident) gives code 0.0062, documents 0.0195, English 0.0088, other languages 0.0048, agent 0.0745, all 0.0228
 (top-1 95.4%). The 8-bit read is at that level. The agent text's number rests on a few near-tie positions (the top 20 of 999 carry half of it); finer blocks
 (16 or 8 values) did not lower it, and 8-bit hyper-connection weights in the first six layers alone give the full figure, in the last 24 layers a third of it.
+
+## Display GPU (RX 6400) Isolation & ROCm/KFD Memory Shim
+
+On systems pairing a low-VRAM display card (e.g. Radeon RX 6400 4GB) with compute cards (e.g. RX 9060 XT 16GB), ROCm's `libhsa-runtime64` can bind host USERPTR allocations to the first GPU node even when compute GPUs are selected via `HIP_VISIBLE_DEVICES`. Furthermore, PCIe switch topology under recent kernel updates can impose SWIOTLB bounce buffer limits on specific slots.
+
+See [AMD_RX6400_ISOLATION.md](AMD_RX6400_ISOLATION.md) for the root-cause analysis, clean-build verification, and the `tools/hip/libkfd_ignore_rx6400.so` shim architecture.
+
