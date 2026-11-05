@@ -1,0 +1,65 @@
+{
+ "exe": "/path/to/project-maya/build-hip/maya",
+ "args": [
+  "--glm-pack",
+  "/path/to/models/Maya-L/pack",
+  "--max-context",
+  "1048576",
+  "--expert-cache",
+  "auto",
+  "--prefill",
+  "4096",
+  "--kv",
+  "int8",
+  "--kv-streaming",
+  "on",
+  "--expert-profile",
+  "/path/to/project-maya/data/expert-profile-glm.bin"
+ ],
+ "cwd": "/path/to/project-maya",
+ "tokenizer": "/path/to/models/Maya-L/pack/tokenizer",
+ "model_name": "glm-5.3-flash-maya-l",
+ "gpu": [
+  1,
+  2
+ ],
+ "sampling": {
+  "temperature": 1.0,
+  "top_p": 0.95
+ },
+ "reasoning_effort": "high",
+ "lib_dirs": [
+  "/opt/rocm/lib"
+ ],
+ "port": 8086,
+ "backend": "hip",
+ "env": {
+  "HSA_ENABLE_P2P": "0",
+  "LD_PRELOAD": "/path/to/project-maya/tools/libkfd_ignore_rx6400.so",
+  "STRATA_GLM_RESERVE_MB": "512",
+  "STRATA_GLM_PREFILL_SUB": "1024",
+  "STRATA_GLM_RAM_HEADROOM_GB": "16",
+  "STRATA_GLM_RAM_RESIDENT": "1",
+  "STRATA_GLM_SLOT_DIR": "/dev/shm/maya-slots",
+  "STRATA_GLM_SPEC_CANCEL": "1",
+  "STRATA_GLM_SPEC_SAMPLE": "1"
+ },
+ "log": "/path/to/project-maya/maya-maya-l-hip.log",
+ "vision": {
+  "exe": "/path/to/project-maya/build-vision-cpu/bin/maya-vision",
+  "mmproj": "/path/to/models/vision/mmproj-GLM-5.3-Flash-F16.gguf",
+  "model": "/path/to/models/vision/GLM-5.3-Flash-vocab.gguf",
+  "gpu": false
+ },
+ "host": "0.0.0.0",
+ "api_key": "<your-strata-api-key>",
+ "lazy_load": true,
+ "before_load": "/path/to/project-maya/tools/ensure_exclusive.sh maya-l",
+ "model_aliases": [
+  "glm-5.3-flash-maya-l",
+  "maya-l",
+  "glm-maya-l",
+  "Maya-L",
+  "maya/glm-5.3-flash-maya-l"
+ ]
+}

@@ -12,6 +12,8 @@ bench/micro/*.txt
 build*/
 pack/
 logs/
+*-slots/
+ds4-slots/
 __pycache__/
 .pytest_cache/
 *.pyc

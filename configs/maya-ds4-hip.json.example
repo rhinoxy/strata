@@ -1,0 +1,50 @@
+{
+ "exe": "/path/to/project-maya/build-hip/maya-ds4",
+ "args": [
+  "--pack",
+  "/path/to/models/DeepSeek-V4.1-Flash-1017-GGUF/Maya-S/maya-ds4",
+  "--max-context",
+  "1048576",
+  "--tp",
+  "2",
+  "--reserve-mib",
+  "1024",
+  "--mmap-experts",
+  "off"
+ ],
+ "cwd": "/path/to/project-maya",
+ "tokenizer": "/path/to/models/DeepSeek-V4.1-Flash-1017-GGUF/Maya-S/maya-ds4/tokenizer",
+ "model_name": "deepseek-v4.1-flash",
+ "model_aliases": [
+  "deepseek-v4.1-flash",
+  "deepseek-v4.1-flash-1017",
+  "DeepSeek-V4.1-Flash-1017",
+  "maya/deepseek-v4.1-flash"
+ ],
+ "lazy_load": true,
+ "before_load": "/path/to/project-maya/tools/ensure_exclusive.sh ds4",
+ "gpu": [
+  1,
+  2
+ ],
+ "sampling": {
+  "temperature": 1.0,
+  "top_p": 0.95
+ },
+ "reasoning_effort": "high",
+ "lib_dirs": [
+  "/opt/rocm/lib"
+ ],
+ "port": 8083,
+ "host": "0.0.0.0",
+ "api_key": "<your-strata-api-key>",
+ "backend": "hip",
+ "env": {
+  "HSA_ENABLE_P2P": "0",
+  "HIP_VISIBLE_DEVICES": "1,2",
+  "LD_PRELOAD": "/path/to/project-maya/tools/libkfd_ignore_rx6400.so",
+  "DS4_ENGRAM_RAM": "1",
+  "DS4_REQUIRE_ALL_RAM": "1"
+ },
+ "log": "/path/to/project-maya/maya-ds4-hip.log"
+}
